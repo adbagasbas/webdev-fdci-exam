@@ -1,0 +1,59 @@
+version: "3.8"
+services:
+
+  debian:
+    container_name: ${PROJECT_NAME}_debian
+    build:
+      context: '.docker/php'
+    networks:
+      - backend
+    volumes:
+      - './:/var/www/html'
+    ports:
+      - '80:80'
+
+  db:
+    container_name: ${PROJECT_NAME}_db
+    image: arm64v8/mysql
+    restart: on-failure
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - backend
+    environment:
+      MYSQL_ROOT_PASSWORD: ${PROJECT_NAME}_root
+      MYSQL_DATABASE: ${PROJECT_NAME}
+      MYSQL_USER: ${PROJECT_NAME}
+      MYSQL_PASSWORD: ${PROJECT_NAME}
+    volumes:
+      - './.docker/mysql/:/var/lib/mysql'
+    ports:
+      - '3306:3306'
+
+  mailhog:
+    container_name: ${PROJECT_NAME}_mailhog
+    image: mailhog/mailhog
+    networks:
+      - backend
+    logging:
+      driver: 'none'
+    ports:
+      - 1025:1025
+      - 8025:8025
+
+  adminer:
+    container_name: ${PROJECT_NAME}_adminer
+    image: adminer:latest
+    restart: always
+    networks:
+      - backend
+    links:
+      - db:db
+    depends_on:
+      - db
+    ports:
+      - 8081:8080
+
+networks:
+  backend:
+
+
